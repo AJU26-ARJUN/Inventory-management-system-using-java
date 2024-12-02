@@ -1,0 +1,158 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+
+public class InventoryManagementSystem {
+    private JFrame frame;
+    private JTable table;
+    private DefaultTableModel tableModel;
+    private ArrayList<Item> inventory;
+
+    public InventoryManagementSystem() {
+        inventory = new ArrayList<>();
+        initialize();
+    }
+
+    private void initialize() {
+        frame = new JFrame("Inventory Management System");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(700, 400);
+
+        // Table for inventory
+        String[] columns = {"ID", "Name", "Quantity", "Price", "Expiration Date"};
+        tableModel = new DefaultTableModel(columns, 0);
+        table = new JTable(tableModel);
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        frame.add(scrollPane, BorderLayout.CENTER);
+
+        // Buttons
+        JPanel panel = new JPanel();
+        JButton addButton = new JButton("Add Item");
+        JButton removeButton = new JButton("Remove Item");
+        JButton updateButton = new JButton("Update Item");
+        JButton checkExpiredButton = new JButton("Check Expired Items");
+
+        panel.add(addButton);
+        panel.add(removeButton);
+        panel.add(updateButton);
+        panel.add(checkExpiredButton);
+
+        frame.add(panel, BorderLayout.SOUTH);
+
+        // Button Actions
+        addButton.addActionListener(e -> addItem());
+        removeButton.addActionListener(e -> removeItem());
+        updateButton.addActionListener(e -> updateItem());
+        checkExpiredButton.addActionListener(e -> checkExpiredItems());
+
+        frame.setVisible(true);
+    }
+
+    private void addItem() {
+        String id = JOptionPane.showInputDialog("Enter Item ID:");
+        String name = JOptionPane.showInputDialog("Enter Item Name:");
+        int quantity = Integer.parseInt(JOptionPane.showInputDialog("Enter Quantity:"));
+        double price = Double.parseDouble(JOptionPane.showInputDialog("Enter Price:"));
+        String expirationDate = JOptionPane.showInputDialog("Enter Expiration Date (YYYY-MM-DD):");
+
+        Item item = new Item(id, name, quantity, price, expirationDate);
+        inventory.add(item);
+        tableModel.addRow(new Object[]{id, name, quantity, price, expirationDate});
+    }
+
+    private void removeItem() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow >= 0) {
+            inventory.remove(selectedRow);
+            tableModel.removeRow(selectedRow);
+        } else {
+            JOptionPane.showMessageDialog(frame, "Select a row to remove.");
+        }
+    }
+
+    private void updateItem() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow >= 0) {
+            String id = (String) tableModel.getValueAt(selectedRow, 0);
+            String name = JOptionPane.showInputDialog("Enter New Name:", tableModel.getValueAt(selectedRow, 1));
+            int quantity = Integer.parseInt(JOptionPane.showInputDialog("Enter New Quantity:", tableModel.getValueAt(selectedRow, 2)));
+            double price = Double.parseDouble(JOptionPane.showInputDialog("Enter New Price:", tableModel.getValueAt(selectedRow, 3)));
+            String expirationDate = JOptionPane.showInputDialog("Enter New Expiration Date (YYYY-MM-DD):", tableModel.getValueAt(selectedRow, 4));
+
+            Item item = inventory.get(selectedRow);
+            item.setName(name);
+            item.setQuantity(quantity);
+            item.setPrice(price);
+            item.setExpirationDate(expirationDate);
+
+            tableModel.setValueAt(name, selectedRow, 1);
+            tableModel.setValueAt(quantity, selectedRow, 2);
+            tableModel.setValueAt(price, selectedRow, 3);
+            tableModel.setValueAt(expirationDate, selectedRow, 4);
+        } else {
+            JOptionPane.showMessageDialog(frame, "Select a row to update.");
+        }
+    }
+
+    private void checkExpiredItems() {
+        StringBuilder expiredItems = new StringBuilder("Expired Items:\n");
+        boolean found = false;
+
+        for (int i = 0; i < inventory.size(); i++) {
+            Item item = inventory.get(i);
+            String expirationDate = item.getExpirationDate();
+
+            if (isExpired(expirationDate)) {
+                expiredItems.append("ID: ").append(item.getId())
+                            .append(", Name: ").append(item.getName())
+                            .append(", Expiration Date: ").append(expirationDate).append("\n");
+                found = true;
+            }
+        }
+
+        if (found) {
+            JOptionPane.showMessageDialog(frame, expiredItems.toString());
+        } else {
+            JOptionPane.showMessageDialog(frame, "No expired items found.");
+        }
+    }
+
+    private boolean isExpired(String expirationDate) {
+        LocalDate currentDate = LocalDate.now();
+        LocalDate itemDate = LocalDate.parse(expirationDate);
+        return itemDate.isBefore(currentDate);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(InventoryManagementSystem::new);
+    }
+}
+
+class Item {
+    private String id;
+    private String name;
+    private int quantity;
+    private double price;
+    private String expirationDate;
+
+    public Item(String id, String name, int quantity, double price, String expirationDate) {
+        this.id = id;
+        this.name = name;
+        this.quantity = quantity;
+        this.price = price;
+        this.expirationDate = expirationDate;
+    }
+
+    public String getId() { return id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
+    public String getExpirationDate() { return expirationDate; }
+    public void setExpirationDate(String expirationDate) { this.expirationDate = expirationDate; }
+}
